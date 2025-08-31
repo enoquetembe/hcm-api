@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database.db"
+}
+
+model Usuario {
+  id       String @id @default(uuid())
+  nome     String
+  email    String @unique
+  password String
+  role     String @default("PACIENTE") // ADMIN, ENFERMEIRO, RECEPCIONISTA, PACIENTE
+
+  // Relacionamentos
+  senhas Senha[]
+}
+
+model Paciente {
+  id                  String @id @default(uuid())
+  nome                String
+  numeroIdentificacao String @unique
+  idade               Int
+  encarregado         String
+  endereco            String
+  telefoneEncarregado String
+  sintomas            String
+
+  // Relacionamentos
+  senhas       Senha[]
+  atendimentos Atendimento[]
+}
+
+model Senha {
+  id           String    @id @default(uuid())
+  cod          String    @unique
+  prioridade   String // MUITO_URGENTE, URGENTE, POUCO_URGENTE
+  status       String // AGUARDANDO, EM_ATENDIMENTO, FINALIZADO
+  posicaoFila  Int
+  tempoEspera  Int?
+  emitidoEm    DateTime  @default(now())
+  iniciadoEm   DateTime?
+  finalizadoEm DateTime?
+
+  // Relacionamentos
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId String
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+
+  atendimento Atendimento?
+  relatorios  Relatorio[]
+}
+
+model Atendimento {
+  id         String @id @default(uuid())
+  senhaId    String @unique
+  pacienteId String
+
+  senha    Senha    @relation(fields: [senhaId], references: [id])
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model Relatorio {
+  id         String   @id @default(uuid())
+  titulo     String
+  periodo    String
+  prioridade String // MUITO_URGENTE, URGENTE, POUCO_URGENTE
+  dataInicio DateTime
+  dataFinal  DateTime
+
+  senhaId String
+  senha   Senha  @relation(fields: [senhaId], references: [id])
+}
